@@ -1,0 +1,75 @@
+# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: explainerdashboard
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron:  '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.9', '3.10', '3.11']
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install uv
+      uses: astral-sh/setup-uv@v1
+      with:
+        uv-version: 'latest'
+    - name: Cache uv global directory
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.UV_CACHE_DIR }}
+        key: ${{ runner.os }}-uv-${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-uv-${{ matrix.python-version }}-
+    - name: Install dependencies
+      run: |
+        # Install the current project (.) and its 'test' and 'docs' extras.
+        # Quotation marks around ".[test,docs]" are good practice for shells.
+        uv pip install ".[test,docs]" --system
+    - name: Verify script installation (for debugging)
+      run: |
+        echo "Python version: $(python --version)"
+        echo "uv version: $(uv --version)"
+        echo "PYTHONUSERBASE: $PYTHONUSERBASE"
+        echo "PIP_USER: $PIP_USER"
+        echo "Checking for explainerdashboard script..."
+        if [[ "$RUNNER_OS" == "Windows" ]]; then
+          Get-Command explainerdashboard -ErrorAction SilentlyContinue || echo "explainerdashboard not found"
+          Get-Command explainerhub -ErrorAction SilentlyContinue || echo "explainerhub not found"
+          echo "PATH: $($env:PATH)"
+        else
+          which explainerdashboard || echo "explainerdashboard not found in PATH"
+          which explainerhub || echo "explainerhub not found in PATH"
+          echo "PATH: $PATH"
+        fi
+        # Show where packages are installed and scripts path
+        PYTHON_SCRIPTS_PATH=$(python -c "import sysconfig; print(sysconfig.get_path('scripts'))")
+        echo "Python scripts directory (from sysconfig): $PYTHON_SCRIPTS_PATH"
+        if [[ -d "$PYTHON_SCRIPTS_PATH" ]]; then
+          ls -alh "$PYTHON_SCRIPTS_PATH"
+        else
+          echo "Scripts directory does not exist or is not accessible."
+        fi
+    - name: Lint with ruff
+      run: |
+        uv run ruff check --ignore=F405,F403,E402 
+    - name: Test with pytest
+      run: |
+        pytest -k "not selenium"
