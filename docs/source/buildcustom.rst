@@ -2,11 +2,11 @@ Building custom layout
 **********************
 
 You can build your own custom dashboard layout by re-using the modular  
-:ref:`ExplainerComponents and connectors<ExplainerComponents>` without needing 
+:ref:`ExComponents and connectors<ExComponents>` without needing 
 to know much about web development or even much about `plotly dash <https://dash.plotly.com/>`_, 
-which is the underlying technology that ``explainerdashboard`` is built on.
+which is the underlying technology that ``ExAI`` is built on.
 
-You can get some inspiration from the `explainerdashboard composites <https://github.com/oegedijk/explainerdashboard/blob/master/explainerdashboard/dashboard_components/composites.py>`_
+You can get some inspiration from the `ExAI composites <https://github.com/oegedijk/ExAI/blob/master/ExAI/dashboard_components/composites.py>`_
 that build the layout of the default dashboard tabs. You can copy that code
 move some of the components around and add some text to make it specific to 
 your own project. 
@@ -18,9 +18,9 @@ For example if you only wanted to build a custom dashboard that only contains
 a ``ConfusionMatrixComponent`` and a ``ShapContributionsGraphComponent``, 
 but you want to hide a few toggles::
 
-    from explainerdashboard.custom import *
+    from ExAI.custom import *
 
-    class CustomDashboard(ExplainerComponent):
+    class CustomDashboard(ExComponent):
         def __init__(self, explainer, name=None, **kwargs):
             super().__init__(explainer, title="Custom Dashboard")
             self.confusion = ConfusionMatrixComponent(explainer, 
@@ -36,7 +36,7 @@ but you want to hide a few toggles::
                 dbc.Row([
                     dbc.Col([
                         html.H1("Custom Demonstration:"),
-                        html.H3("How to build your own layout using ExplainerComponents.")
+                        html.H3("How to build your own layout using ExComponents.")
                     ])
                 ]),
                 dbc.Row([
@@ -49,18 +49,18 @@ but you want to hide a few toggles::
                 ])
             ])
 
-    db = ExplainerDashboard(explainer, CustomDashboard, hide_header=True)
+    db = ExAI(explainer, CustomDashboard, hide_header=True)
     db.run()
 
 .. image:: screenshots/custom.png
 
 So you need to 
 
-1. Import ``ExplainerComponents`` with ``from explainerdashboard.custom import *``. (this also
+1. Import ``ExComponents`` with ``from ExAI.custom import *``. (this also
    imports ``dash_html_components as html``, ``dash_core_components as dcc`` and
    ``dash_bootstrap_components as dbc`` for you.
 
-2. Derive a child class from ``ExplainerComponent``. 
+2. Derive a child class from ``ExComponent``. 
 
 3. Include ``explainer, name=None`` in your ``__init__()``.
 
@@ -76,17 +76,17 @@ So you need to
    include your components' layout in this overall layout with ``self.confusion.layout()``
    and ``self.contrib.layout()``.
 
-8. Pass the class to an ``ExplainerDashboard`` and ``run()`` it. 
+8. Pass the class to an ``ExAI`` and ``run()`` it. 
 
 
-You can find the list of all ``ExplainerComponents`` in the :ref:`documentation<ExplainerComponents>`.
+You can find the list of all ``ExComponents`` in the :ref:`documentation<ExComponents>`.
 
 .. note::
     To save on boilerplate code, parameters in the ``__init__`` will automagically be 
     stored to attributes by ``super().__init__(explainer, title)``. So in the example 
     below you do not have to explicitly call ``self.a = a`` in the init::
 
-        class CustomDashboard(ExplainerComponent):
+        class CustomDashboard(ExComponent):
             def __init__(self, explainer, name=None, a=1):
                 super().__init__(explainer)
 
@@ -94,14 +94,14 @@ You can find the list of all ``ExplainerComponents`` in the :ref:`documentation<
         assert custom.a == 1
 
     This includes the naming of the component itself, by setting ``name=None``, 
-    in the ``__init__``. ``ExplainerDashboard`` will then assign a unique 
+    in the ``__init__``. ``ExAI`` will then assign a unique 
     name of your component to make sure that component `id`'s will not clash,
     but will be consistent with multi worker or multi node deployments.
 
-Including ExplainerComponents in regular ``dash`` app
+Including ExComponents in regular ``dash`` app
 =====================================================
 
-An ``ExplainerComponent`` can easily be included in regular `dash <https://dash.plotly.com/>`_ code::
+An ``ExComponent`` can easily be included in regular `dash <https://dash.plotly.com/>`_ code::
 
     import dash 
 
@@ -155,17 +155,17 @@ precision graph, the shap summary and the shap dependence component, and
 add explanatory text on either side of each component. The ``ShapSummaryDependenceConnector``
 connects a ShapSummaryComponent and a ShapDependenceComponent so that when you 
 select a feature in the summary, it automatically gets selected in the dependence 
-plot. You can find other connectors such :ref:`IndexConnector<IndexConnector>`,
+plot. You can find other connectors such :ref:`IndExAIonnector<IndExAIonnector>`,
 :ref:`PosLabelConnector<PosLabelConnector>`, :ref:`CutoffConnector<CutoffConnector>`
 and :ref:`HighlightConnector<HighlightConnector>` in the :ref:`Connector documentation<Connectors>`::
 
     import dash_html_components as html
     import dash_bootstrap_components as dbc
 
-    from explainerdashboard.custom import *
-    from explainerdashboard import ExplainerDashboard
+    from ExAI.custom import *
+    from ExAI import ExAI
 
-    class CustomModelTab(ExplainerComponent):
+    class CustomModelTab(ExComponent):
         def __init__(self, explainer, name=None):
             super().__init__(explainer, title="Titanic Explainer")
             self.precision = PrecisionComponent(explainer, 
@@ -241,21 +241,21 @@ and :ref:`HighlightConnector<HighlightConnector>` in the :ref:`Connector documen
                 ])
             ])
     
-    ExplainerDashboard(explainer, CustomModelTab, hide_header=True).run()
+    ExAI(explainer, CustomModelTab, hide_header=True).run()
 
 .. note::
     All subcomponents that are defined as attibutes in the ``__init__``, either
     explicitly or automagically through the ``super().__init__``, and 
     hence are added to ``self.__dict__`` also automatically get their callbacks 
     registered when you call ``.register_callbacks(app)`` on the parent component. 
-    If you would like to exclude that (for example because the subcomponent has 
+    If you would like to ExAIlude that (for example because the subcomponent has 
     already been initialized elsewhere and you just need to store the reference),
-    then you can exclude it with ``exclude_callbacks(components)``::
+    then you can ExAIlude it with ``ExAIlude_callbacks(components)``::
 
-        class CustomDashboard(ExplainerComponent):
+        class CustomDashboard(ExComponent):
             def __init__(self, explainer, name=None, feature_input_component):
                 super().__init__(explainer)
-                self.exclude_callbacks(self.feature_input_component)
+                self.ExAIlude_callbacks(self.feature_input_component)
 
 
 
@@ -264,17 +264,17 @@ CustomPredictionsTab
 
 We can also add another tab to investigate individual predictions, that 
 includes an index selector, a SHAP contributions graph and a Random Forest
-individual trees graph. The ``IndexConnector`` connects the index selected
-in ``ClassifierRandomIndexComponent`` with the index dropdown in the 
+individual trees graph. The ``IndExAIonnector`` connects the index selected
+in ``ClassifierRandomIndExAIomponent`` with the index dropdown in the 
 contributions graph and trees components. We also pass a 
 custom `dbc theme <https://dash-bootstrap-components.opensource.faculty.ai/docs/themes/>`_ 
 called FLATLY as a custom css file::
 
-    class CustomPredictionsTab(ExplainerComponent):
+    class CustomPredictionsTab(ExComponent):
         def __init__(self, explainer, name=None):
             super().__init__(explainer, title="Predictions")
             
-            self.index = ClassifierRandomIndexComponent(explainer, 
+            self.index = ClassifierRandomIndExAIomponent(explainer, 
                                                         hide_title=True, hide_index=False, 
                                                         hide_slider=True, hide_labels=True, 
                                                         hide_pred_or_perc=True, 
@@ -291,7 +291,7 @@ called FLATLY as a custom css file::
                                                 hide_title=True, hide_index=True, 
                                                 hide_highlight=True, hide_selector=True)
 
-            self.connector = IndexConnector(self.index, [self.contributions, self.trees])
+            self.connector = IndExAIonnector(self.index, [self.contributions, self.trees])
             
         def layout(self):
             return dbc.Container([
@@ -316,7 +316,7 @@ called FLATLY as a custom css file::
                 ])
             ])
 
-    ExplainerDashboard(explainer, [CustomModelTab, CustomPredictionsTab], 
+    ExAI(explainer, [CustomModelTab, CustomPredictionsTab], 
                    title='Titanic Explainer',
                    header_hide_selector=True, 
                    bootstrap=dbc.themes.FLATLY).run()
@@ -334,11 +334,11 @@ Comparing multiple models
 
 You can also compare multiple models in the same dashboard, or inside the same
 tab. In this case it is important to already instantiate the component/tab before
-passing it on to the ``ExplainerDashboard``::
+passing it on to the ``ExAI``::
 
-    from explainerdashboard import *
-    from explainerdashboard.datasets import *
-    from explainerdashboard.custom import *
+    from ExAI import *
+    from ExAI.datasets import *
+    from ExAI.custom import *
 
     from sklearn.ensemble import RandomForestClassifier
     from xgboost import XGBClassifier
@@ -351,7 +351,7 @@ passing it on to the ``ExplainerDashboard``::
     explainer1 = ClassifierExplainer(model1, X_test, y_test)
     explainer2 = ClassifierExplainer(model2, X_test, y_test)
 
-    class ConfusionComparison(ExplainerComponent):
+    class ConfusionComparison(ExComponent):
         def __init__(self, explainer1, explainer2):
             super().__init__(explainer1)
             self.confmat1 = ConfusionMatrixComponent(explainer1, cutoff=0.6,
@@ -373,20 +373,20 @@ passing it on to the ``ExplainerDashboard``::
         
     tab = ConfusionComparison(explainer1, explainer2)
 
-    ExplainerDashboard(explainer1, tab).run()
+    ExAI(explainer1, tab).run()
 
 
 Custom static html export
 =========================
 
 To enable your custom dashboard to be exported to html you need to define a ``to_html`` method
-that returns an html layout. There are helper functions in ``explainerdashboard.to_html`` to
+that returns an html layout. There are helper functions in ``ExAI.to_html`` to
 help you construct this html using python code, which get automatically loaded when 
-you ``from explainerdashboard.custom import *``::
+you ``from ExAI.custom import *``::
 
-    from explainerdashboard.custom import *
+    from ExAI.custom import *
 
-    class CustomDashboard(ExplainerComponent):
+    class CustomDashboard(ExComponent):
         def __init__(self, explainer, name=None, **kwargs):
             super().__init__(explainer, title="Custom Dashboard")
             self.confusion = ConfusionMatrixComponent(explainer, **kwargs)
@@ -397,7 +397,7 @@ you ``from explainerdashboard.custom import *``::
                 dbc.Row([
                     dbc.Col([
                         html.H1("Custom Demonstration:"),
-                        html.H3("How to build your own layout using ExplainerComponents.")
+                        html.H3("How to build your own layout using ExComponents.")
                     ])
                 ]),
                 dbc.Row([
@@ -444,7 +444,7 @@ why it is important to pass ``state_dict`` down to subcomponents.
 
 An example is the ``ConfusionMatrixComponent``::
 
-    class ConfusionMatrixComponent(ExplainerComponent):
+    class ConfusionMatrixComponent(ExComponent):
         _state_props = dict(
             cutoff=('confusionmatrix-cutoff-', 'value'),
             percentage=('confusionmatrix-percentage-', 'value'),
@@ -491,17 +491,17 @@ An example is the ``ConfusionMatrixComponent``::
 
 
 When exporting to html you probably want to set a default ``index`` value for your 
-``ExplainerDashboard``. This is the index that will be displayed in the plots
+``ExAI``. This is the index that will be displayed in the plots
 with individual rows of data when you call 
-``ExplainerDashboard.to_html()`` directly, e.g. 
-``ExplainerDashboard(explainer, index=0).to_html('dashboard.html')``.
+``ExAI.to_html()`` directly, e.g. 
+``ExAI(explainer, index=0).to_html('dashboard.html')``.
 
 ``to_html`` helper functions
 ============================
 
-The ``explainerdashboard.to_html`` module contains a number of useful functions that you 
+The ``ExAI.to_html`` module contains a number of useful functions that you 
 can use inside your custom ``to_html()`` methods:
 
-.. automodule:: explainerdashboard.to_html
+.. automodule:: ExAI.to_html
    :members:
 
